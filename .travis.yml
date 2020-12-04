@@ -1,0 +1,24 @@
+sudo: required
+language: generic
+
+services:
+  - docker
+
+before_install:
+  - docker build -t ibarzanov/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run -e CI=true ibarzanov/react-test npm test
+
+after_success:
+  - docker build -t ibarzanov/multi-client ./client
+  - docker build -t ibarzanov/multi-nginx ./nginx
+  - docker build -t ibarzanov/multi-server ./server
+  - docker build -t ibarzanov/multi-worker ./worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push ibarzanov/multi-client
+  - docker push ibarzanov/multi-nginx
+  - docker push ibarzanov/multi-server
+  - docker push ibarzanov/multi-worker
